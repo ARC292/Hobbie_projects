@@ -34,6 +34,26 @@ function CreateUserWrapper() {
   );
 }
 
+// 🌟 THE FIX: ProtectedRoute is now defined OUTSIDE the App component!
+const ProtectedRoute = ({ children, allowedRoles, user }) => {
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const userRole = user.role;
+
+  if (allowedRoles && !allowedRoles.includes(userRole)) {
+    return (
+      <Navigate
+        to={userRole === "admin" ? "/admin" : "/dashboard"}
+        replace
+      />
+    );
+  }
+
+  return children;
+};
+
 export default function App() {
   const [user, setUser] = useState(() => {
     const savedUser = sessionStorage.getItem("user");
@@ -73,25 +93,6 @@ export default function App() {
     sessionStorage.setItem("user", JSON.stringify(updatedUser));
   };
 
-  const ProtectedRoute = ({ children, allowedRoles }) => {
-    if (!user) {
-      return <Navigate to="/login" replace />;
-    }
-
-    const userRole = user.role;
-
-    if (allowedRoles && !allowedRoles.includes(userRole)) {
-      return (
-        <Navigate
-          to={userRole === "admin" ? "/admin" : "/dashboard"}
-          replace
-        />
-      );
-    }
-
-    return children;
-  };
-
   return (
     <Router>
       <Routes>
@@ -113,7 +114,7 @@ export default function App() {
         <Route
           path="/register"
           element={
-            <ProtectedRoute allowedRoles={["admin"]}>
+            <ProtectedRoute allowedRoles={["admin"]} user={user}>
               <CreateUserWrapper />
             </ProtectedRoute>
           }
@@ -122,7 +123,7 @@ export default function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute allowedRoles={["admin"]}>
+            <ProtectedRoute allowedRoles={["admin"]} user={user}>
               <AdminDashboard
                 user={user}
                 onLogout={handleLogout}
@@ -135,10 +136,11 @@ export default function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["user"]}>
+            <ProtectedRoute allowedRoles={["user"]} user={user}>
               <UserDashboard
                 user={user}
                 onLogout={handleLogout}
+                onUserUpdate={handleUserUpdate}
               />
             </ProtectedRoute>
           }

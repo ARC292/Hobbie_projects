@@ -134,7 +134,7 @@ class GetUserById(APIView):
 
 
 class UpdateUser(APIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAdmin|IsUser]
      
     def put(self, request, id):    
         try:
